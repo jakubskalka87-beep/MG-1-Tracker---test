@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MG1 Tracker">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>MG1 Tracker</title>
+<style>
+:root{--bg:#0b1020;--panel:#141b2f;--panel2:#1b2540;--text:#f4f6fb;--muted:#9ca8c2;--line:#2a3655;--accent:#8b9cff;--good:#65d6a4}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top right,#1c2850 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1100px;margin:auto;padding:28px 18px 50px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
+h1{font-size:clamp(27px,4vw,38px);margin:0;letter-spacing:-1px}.sub{color:var(--muted);margin:5px 0 0}.pill{border:1px solid var(--line);border-radius:999px;padding:7px 12px;color:var(--muted);font-size:12px}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0 22px}.card,.panel{background:linear-gradient(145deg,var(--panel),#11182a);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 10px 30px #0002}
+.card .label{font-size:13px;color:var(--muted)}.number{font-size:32px;font-weight:750;letter-spacing:-1px;margin-top:5px}.detail{font-size:12px;color:var(--muted);margin-top:4px}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel h2{font-size:18px;margin:0 0 4px}.help{color:var(--muted);font-size:13px;margin:0 0 16px}
+label{display:block;font-size:13px;color:#c6cee0;margin-bottom:6px}input,select{width:100%;background:#0d1426;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:11px 12px;font:inherit;outline:none}input:focus,select:focus{border-color:var(--accent)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:13px}.wide{grid-column:1/-1}
+button{border:0;border-radius:10px;padding:11px 15px;font:inherit;font-weight:650;cursor:pointer;background:var(--accent);color:#0a1020}button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}button.danger{background:#40202b;color:#ffb7c5;border:1px solid #693142}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:4px}
+.statrow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.statrow:last-child{border-bottom:0}.statrow small{display:block;color:var(--muted)}.statrow strong{font-size:20px}
+.bar{height:7px;background:#26314d;border-radius:99px;overflow:hidden;margin-top:7px}.bar span{display:block;height:100%;background:var(--accent);border-radius:99px}
+.tablewrap{overflow:auto;margin-top:14px}table{width:100%;border-collapse:collapse;min-width:640px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted);font-weight:600}td:last-child{text-align:right}.empty{color:var(--muted);text-align:center;padding:24px 0}
+.footer{font-size:12px;color:var(--muted);margin-top:18px}
+@media(max-width:760px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}.number{font-size:28px}.panel{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div><h1>MG1 Tracker</h1><p class="sub">Jednoduchý přehled oslovování a kvalifikace.</p></div>
+    <span class="pill">Ukládání v tomto prohlížeči</span>
+  </div>
+  <section class="cards">
+    <div class="card"><div class="label">Oslovení celkem</div><div class="number" id="totalContact">0</div><div class="detail" id="channelBreakdown">IG 0 · Venku 0</div></div>
+    <div class="card"><div class="label">MG1 schůzky</div><div class="number" id="totalMg1">0</div><div class="detail" id="mg1Rate">0 % z oslovených</div></div>
+    <div class="card"><div class="label">Dokončená kvalifikace</div><div class="number" id="totalPassed">0</div><div class="detail" id="passRate">0 % z MG1</div></div>
+    <div class="card"><div class="label">Celková úspěšnost</div><div class="number" id="overallRate">0 %</div><div class="detail">Dokončená kvalifikace / oslovení</div></div>
+  </section>
+  <div class="layout">
+    <section class="panel">
+      <h2>Zapsat výsledky</h2><p class="help">Zapiš denní čísla. Každý záznam můžeš později upravit smazáním a novým zápisem.</p>
+      <form id="entryForm">
+        <div class="fields">
+          <div class="field"><label for="date">Datum</label><input id="date" type="date" required></div>
+          <div class="field"><label for="channel">Odkud oslovení</label><select id="channel"><option value="ig">Instagram</option><option value="outside">Venku</option></select></div>
+          <div class="field"><label for="contacts">Počet oslovených</label><input id="contacts" type="number" min="0" step="1" value="0" required></div>
+          <div class="field"><label for="mg1">Počet lidí, kteří přišli na MG1</label><input id="mg1" type="number" min="0" step="1" value="0" required></div>
+          <div class="field wide"><label for="passed">Počet lidí, kteří dokončili všechny schůzky (prošli kvalifikací)</label><input id="passed" type="number" min="0" step="1" value="0" required></div>
+        </div>
+        <div class="actions"><button type="submit">Uložit záznam</button><button class="secondary" type="button" id="resetForm">Vymazat formulář</button></div>
+        <p class="footer" id="formMessage" aria-live="polite"></p>
+      </form>
+    </section>
+    <section class="panel">
+      <h2>Statistiky podle kanálu</h2><p class="help">Srovnání Instagramu a oslovování venku.</p>
+      <div class="statrow"><div>Instagram<small id="igSub">0 MG1 · 0 dokončených</small><div class="bar"><span id="igBar" style="width:0%"></span></div></div><strong id="igContacts">0</strong></div>
+      <div class="statrow"><div>Venku<small id="outSub">0 MG1 · 0 dokončených</small><div class="bar"><span id="outBar" style="width:0%"></span></div></div><strong id="outContacts">0</strong></div>
+      <div class="statrow"><div>Konverze oslovení → MG1<small>Kolik oslovených dorazilo na MG1</small></div><strong id="contactConversion">0 %</strong></div>
+      <div class="statrow"><div>Konverze MG1 → dokončení<small>Kolik lidí dokončilo celý proces</small></div><strong id="mgConversion">0 %</strong></div>
+    </section>
+  </div>
+  <section class="panel" style="margin-top:16px">
+    <h2>Historie záznamů</h2><p class="help">Záznamy jsou seřazené od nejnovějších. Součty nahoře se průběžně přepočítávají.</p>
+    <div class="tablewrap"><table><thead><tr><th>Datum</th><th>Kanál</th><th>Oslovení</th><th>MG1</th><th>Dokončili</th><th></th></tr></thead><tbody id="history"></tbody></table><div class="empty" id="emptyState">Zatím tu nejsou žádné záznamy. Přidej první výše.</div></div>
+    <div class="actions" style="margin-top:14px"><button class="secondary" id="exportBtn" type="button">Exportovat CSV</button><button class="danger" id="clearBtn" type="button">Smazat všechny záznamy</button></div>
+    <p class="footer">Tip: pro jistotu si občas exportuj CSV. Data zůstávají v tomto prohlížeči a při vymazání jeho dat se mohou ztratit.</p>
+  </section>
+</main>
+<script>
+const KEY='mg1-tracker-v1';
+const $=id=>document.getElementById(id);
+const today=new Date(); $('date').value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
+let entries=[]; try{entries=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){entries=[]}
+const save=()=>localStorage.setItem(KEY,JSON.stringify(entries));
+const sum=(arr,key)=>arr.reduce((n,x)=>n+(Number(x[key])||0),0);
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+const fmtDate=d=>{if(!d)return '';const [y,m,day]=d.split('-');return `${day}.${m}.${y}`};
+function render(){
+ const ig=entries.filter(e=>e.channel==='ig'), out=entries.filter(e=>e.channel==='outside');
+ const contacts=sum(entries,'contacts'), mg1=sum(entries,'mg1'), passed=sum(entries,'passed');
+ const igc=sum(ig,'contacts'), outc=sum(out,'contacts'), igm=sum(ig,'mg1'), outm=sum(out,'mg1'), igp=sum(ig,'passed'), outp=sum(out,'passed');
+ $('totalContact').textContent=contacts;$('channelBreakdown').textContent=`IG ${igc} · Venku ${outc}`;
+ $('totalMg1').textContent=mg1;$('mg1Rate').textContent=`${pct(mg1,contacts)} % z oslovených`;
+ $('totalPassed').textContent=passed;$('passRate').textContent=`${pct(passed,mg1)} % z MG1`;
+ $('overallRate').textContent=pct(passed,contacts)+'%';
+ $('igContacts').textContent=igc;$('igSub').textContent=`${igm} MG1 · ${igp} dokončených`;
+ $('outContacts').textContent=outc;$('outSub').textContent=`${outm} MG1 · ${outp} dokončených`;
+ $('igBar').style.width=Math.min(100,pct(igc,contacts))+'%';$('outBar').style.width=Math.min(100,pct(outc,contacts))+'%';
+ $('contactConversion').textContent=pct(mg1,contacts)+' %';$('mgConversion').textContent=pct(passed,mg1)+' %';
+ const sorted=[...entries].sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
+ $('history').innerHTML=sorted.map(e=>`<tr><td>${fmtDate(e.date)}</td><td>${e.channel==='ig'?'Instagram':'Venku'}</td><td>${e.contacts}</td><td>${e.mg1}</td><td>${e.passed}</td><td><button class="danger" style="padding:6px 9px;font-size:12px" onclick="removeEntry('${e.id}')">Smazat</button></td></tr>`).join('');
+ $('emptyState').style.display=entries.length?'none':'block';
+}
+window.removeEntry=id=>{entries=entries.filter(e=>e.id!==id);save();render()};
+$('entryForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const date=$('date').value,channel=$('channel').value,contacts=+$('contacts').value,mg1=+$('mg1').value,passed=+$('passed').value;
+ if(mg1>contacts){$('formMessage').textContent='Pozor: počet MG1 je vyšší než počet oslovených. Zkontroluj čísla.';return}
+ if(passed>mg1){$('formMessage').textContent='Pozor: počet dokončených kvalifikací je vyšší než počet MG1. Zkontroluj čísla.';return}
+ entries.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),date,channel,contacts,mg1,passed,created:Date.now()});save();render();
+ $('formMessage').textContent='Záznam uložen.';$('contacts').value=0;$('mg1').value=0;$('passed').value=0;
+});
+$('resetForm').onclick=()=>{$('contacts').value=0;$('mg1').value=0;$('passed').value=0;$('formMessage').textContent=''};
+$('clearBtn').onclick=()=>{if(confirm('Opravdu chceš smazat úplně všechny záznamy? Tuto akci nelze vrátit.')){entries=[];save();render();$('formMessage').textContent=''}};
+$('exportBtn').onclick=()=>{
+ const rows=[['Datum','Kanál','Oslovení','MG1','Dokončená kvalifikace'],...entries.map(e=>[e.date,e.channel==='ig'?'Instagram':'Venku',e.contacts,e.mg1,e.passed])];
+ const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='mg1-statistiky.csv';a.click();URL.revokeObjectURL(url);
+};
+render();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
